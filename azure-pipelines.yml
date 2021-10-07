@@ -141,8 +141,8 @@ stages:
     - group: TerraformEnvVars
     steps:
     - bash: "pwd"
+    - bash: "ls"
     - bash: "terraform -version"
-    - bash: "cd terraform"
     - script: |
         set -e
 
@@ -150,6 +150,8 @@ stages:
         terraform apply -input=false -auto-approve
       name: 'RunTerraform'
       displayName: 'Run Terraform'
+      # https://docs.microsoft.com/en-us/azure/devops/pipelines/tasks/utility/command-line?view=azure-devops#arguments
+      workingDirectory: terraform/
       env:
         ARM_CLIENT_ID: $(ARM_CLIENT_ID)
         ARM_CLIENT_SECRET: $(ARM_CLIENT_SECRET)
