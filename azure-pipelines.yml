@@ -140,9 +140,9 @@ stages:
     variables:
     - group: TerraformEnvVars
     steps:
-    - bash: "pwd"
-    - bash: "ls"
-    - bash: "terraform -version"
+    # - bash: "pwd" # /home/vsts/work/1/s
+    # - bash: "ls"
+    # - bash: "terraform -version" # Terraform v1.0.8
     - script: |
         set -e
 
@@ -151,7 +151,7 @@ stages:
       name: 'RunTerraform'
       displayName: 'Run Terraform'
       # https://docs.microsoft.com/en-us/azure/devops/pipelines/tasks/utility/command-line?view=azure-devops#arguments
-      workingDirectory: terraform/
+      workingDirectory: ContosoUniversity/terraform/
       env:
         ARM_CLIENT_ID: $(ARM_CLIENT_ID)
         ARM_CLIENT_SECRET: $(ARM_CLIENT_SECRET)
