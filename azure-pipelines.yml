@@ -140,6 +140,7 @@ stages:
     variables:
     - group: TerraformEnvVars
     steps:
+    - bash: "cd terraform"
     - script: |
         set -e
 
