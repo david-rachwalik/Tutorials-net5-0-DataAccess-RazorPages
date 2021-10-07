@@ -8,17 +8,21 @@
 trigger:
 - master
 
+variables:
+  tag: '$(Build.BuildId)'
+
 stages:
 - stage: Build
   pool:
     vmImage: "ubuntu-latest"
   variables:
-    dotnetRuntimeVersion: "3.1.x"
+    dotnetRuntimeVersion: "5.0.x"
     solution: "**/*.sln"
+    projectName: "ContosoUniversity"
     buildPlatform: "AnyCPU"
     buildConfiguration: "Release"
     scriptName: "migrations.sql"
-    dbContext: "DefaultContext"
+    dbContext: "SchoolContext"
   jobs:
   - job: Build
     steps:
@@ -72,8 +76,8 @@ stages:
     # https://docs.microsoft.com/en-us/ef/core/miscellaneous/cli/dotnet
     - script: >-
         dotnet ef migrations script
-        --project ContosoUniversity/ContosoUniversity.csproj
-        --startup-project ContosoUniversity/ContosoUniversity.csproj
+        --project $(projectName)/$(projectName).csproj
+        --startup-project $(projectName)/$(projectName).csproj
         --output $(Build.ArtifactStagingDirectory)/sql/$(scriptName)
         --idempotent
       # --runtime version: "$(dotnetRuntimeVersion)"
@@ -124,3 +128,34 @@ stages:
     - bash: "ls -la $(Agent.BuildDirectory)"                    # /home/vsts/work/1         # returned TestResults, a, b, s
     - bash: "ls -la $(Build.ArtifactStagingDirectory)"          # /home/vsts/work/1/a
     - bash: "ls -la $(Build.SourcesDirectory)"                  # /home/vsts/work/1/s
+
+
+- stage: Provision
+  displayName: 'Terraforming on Azure'
+  dependsOn: Build
+  pool:
+    vmImage: "ubuntu-latest"
+  jobs:
+  - job: Provision
+    displayName: 'Provision Container Instance'
+    variables:
+    - group: TerraformEnvVars
+    steps:
+    # - bash: "pwd" # /home/vsts/work/1/s
+    # - bash: "ls"
+    # - bash: "terraform -version" # Terraform v1.0.8
+    - script: |
+        set -e
+
+        terraform init -input=false
+        terraform apply -input=false -auto-approve
+      name: 'RunTerraform'
+      displayName: 'Run Terraform'
+      # https://docs.microsoft.com/en-us/azure/devops/pipelines/tasks/utility/command-line?view=azure-devops#arguments
+      workingDirectory: $(projectName)/terraform/
+      env:
+        ARM_CLIENT_ID: $(ARM_CLIENT_ID)
+        ARM_CLIENT_SECRET: $(ARM_CLIENT_SECRET)
+        ARM_TENANT_ID: $(ARM_TENANT_ID)
+        ARM_SUBSCRIPTION_ID: $(ARM_SUBSCRIPTION_ID)
+        TF_VAR_imagebuild: $(tag)
