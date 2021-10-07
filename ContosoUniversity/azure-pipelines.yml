@@ -10,6 +10,7 @@ trigger:
 
 variables:
   tag: '$(Build.BuildId)'
+  projectName: "ContosoUniversity"
 
 stages:
 - stage: Build
@@ -18,7 +19,6 @@ stages:
   variables:
     dotnetRuntimeVersion: "5.0.x"
     solution: "**/*.sln"
-    projectName: "ContosoUniversity"
     buildPlatform: "AnyCPU"
     buildConfiguration: "Release"
     scriptName: "migrations.sql"
