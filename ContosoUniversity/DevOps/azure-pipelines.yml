@@ -54,7 +54,10 @@ stages:
       displayName: "Build .NET: $(buildConfiguration)"
       inputs:
         command: build
-        arguments: "--configuration $(buildConfiguration)"
+        arguments: >-
+          --framework $(dotnetFramework)
+          --configuration $(buildConfiguration)
+          --nologo
 
 
     # ------------------------ Test Steps ------------------------
@@ -64,6 +67,10 @@ stages:
         command: test
         projects: "**/*Tests/*.csproj"
         arguments: "--configuration $(buildConfiguration)"
+        arguments: >-
+          --framework $(dotnetFramework)
+          --configuration $(buildConfiguration)
+          --nologo
 
         
     # ------------------------ Artifact Staging Steps ------------------------
@@ -97,9 +104,7 @@ stages:
     - task: CopyFiles@2
       displayName: "Stage ARM files"
       inputs:
-        # sourceFolder: "$(Build.SourcesDirectory)"
-        #contents: "**\\ArmTemplates\\**\\azuredeploy*.json"
-        contents: "**/ArmTemplates/**/azuredeploy*.json"
+        contents: "**/bin/**/ArmTemplates/**/azuredeploy*.json"
         targetFolder: "$(Build.ArtifactStagingDirectory)"
 
       
