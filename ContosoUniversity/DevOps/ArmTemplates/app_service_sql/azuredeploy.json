@@ -143,21 +143,7 @@
       },
       "tags": {
         "displayName": "Database"
-      },
-      "resources": [
-        {
-          // https://docs.microsoft.com/en-us/azure/templates/microsoft.sql/servers/databases/transparentdataencryption
-          "type": "transparentDataEncryption",
-          "apiVersion": "2021-02-01-preview",
-          "name": "current",
-          "dependsOn": [
-            "[resourceId('Microsoft.Sql/servers/databases', variables('sqlServerName'), variables('databaseName'))]"
-          ],
-          "properties": {
-            "state": "Enabled"
-          }
-        }
-      ]
+      }
     },
     {
       // https://docs.microsoft.com/en-us/azure/templates/microsoft.web/sites
