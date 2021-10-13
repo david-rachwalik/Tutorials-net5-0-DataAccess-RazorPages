@@ -49,6 +49,7 @@ stages:
 
         
   - job: Build
+    dependsOn: Setup_Environment
     steps:
     # https://docs.microsoft.com/en-us/azure/devops/pipelines/tasks/build/dotnet-core-cli
     - task: DotNetCoreCLI@2
@@ -103,6 +104,7 @@ stages:
 
     
   - job: Test
+    dependsOn: Build
     steps:
     - task: DotNetCoreCLI@2
       displayName: "dotnet test $(buildConfiguration)"
@@ -114,6 +116,7 @@ stages:
 
         
   - job: Publish
+    dependsOn: Test
     steps:
     # Provides zip file for web app service
     - task: DotNetCoreCLI@2
