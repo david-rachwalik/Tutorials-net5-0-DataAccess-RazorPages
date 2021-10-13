@@ -66,7 +66,6 @@ stages:
       inputs:
         command: test
         projects: "**/*Tests/*.csproj"
-        arguments: "--configuration $(buildConfiguration)"
         arguments: >-
           --framework $(dotnetFramework)
           --configuration $(buildConfiguration)
@@ -106,6 +105,7 @@ stages:
       inputs:
         contents: "**/bin/**/ArmTemplates/**/azuredeploy*.json"
         targetFolder: "$(Build.ArtifactStagingDirectory)"
+        flattenFolders: True
 
       
     # ------------------------ Artifact Publish Steps ------------------------
