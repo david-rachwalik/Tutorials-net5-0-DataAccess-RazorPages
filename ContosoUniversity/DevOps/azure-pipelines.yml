@@ -97,8 +97,9 @@ stages:
     - task: CopyFiles@2
       displayName: "Stage ARM files"
       inputs:
-        sourceFolder: "$(Build.SourcesDirectory)"
-        contents: "**\\ArmTemplates\\**\\azuredeploy*.json"
+        # sourceFolder: "$(Build.SourcesDirectory)"
+        #contents: "**\\ArmTemplates\\**\\azuredeploy*.json"
+        contents: "**/ArmTemplates/**/azuredeploy*.json"
         targetFolder: "$(Build.ArtifactStagingDirectory)"
 
       
