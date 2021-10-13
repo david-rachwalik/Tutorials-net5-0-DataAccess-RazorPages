@@ -24,7 +24,8 @@ stages:
     buildConfiguration: "Release"
     scriptName: "migrations.sql"
   jobs:
-  - job: Setup_Environment
+  # Each job runs on its own machine; need installed tools to persist across all steps
+  - job: Build
     steps:
     # https://docs.microsoft.com/en-us/azure/devops/pipelines/tasks/tool/dotnet-core-tool-installer
     - task: UseDotNet@2
@@ -48,9 +49,7 @@ stages:
         restoreSolution: "$(solution)"
 
         
-  - job: Build
-    dependsOn: Setup_Environment
-    steps:
+    # -------- Build Steps --------
     # https://docs.microsoft.com/en-us/azure/devops/pipelines/tasks/build/dotnet-core-cli
     - task: DotNetCoreCLI@2
       displayName: "Build .NET: $(buildConfiguration)"
@@ -103,9 +102,7 @@ stages:
     - bash: "ls -la $(Build.SourcesDirectory)"                  # /home/vsts/work/1/s
 
     
-  - job: Test
-    dependsOn: Build
-    steps:
+    # -------- Test Steps --------
     - task: DotNetCoreCLI@2
       displayName: "dotnet test $(buildConfiguration)"
       inputs:
@@ -115,9 +112,7 @@ stages:
 
 
         
-  - job: Publish
-    dependsOn: Test
-    steps:
+    # -------- Publish Steps --------
     # Provides zip file for web app service
     - task: DotNetCoreCLI@2
       displayName: "Stage build output"
