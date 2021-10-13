@@ -10,40 +10,47 @@ trigger:
 
 variables:
   tag: '$(Build.BuildId)'
+  dotnetRuntimeVersion: "5.0.x"
   projectName: "ContosoUniversity"
+  dbContext: "SchoolContext"
 
 stages:
 - stage: Build
   pool:
     vmImage: "ubuntu-latest"
   variables:
-    dotnetRuntimeVersion: "5.0.x"
     solution: "**/*.sln"
     buildPlatform: "AnyCPU"
     buildConfiguration: "Release"
     scriptName: "migrations.sql"
-    dbContext: "SchoolContext"
   jobs:
-  - job: Build
+  - job: Setup_Environment
     steps:
+    # https://docs.microsoft.com/en-us/azure/devops/pipelines/tasks/tool/dotnet-core-tool-installer
     - task: UseDotNet@2
-      displayName: "Install .NET Core SDK"
+      displayName: "Install .NET SDK"
       inputs:
         version: "$(dotnetRuntimeVersion)"
         packageType: runtime
     
-    # Omit '--version' here and let SDK find correct EF package
+    # Omit '--version' here and let SDK determine EF package
     - script: dotnet tool install --global dotnet-ef
-      displayName: "Install .NET EF Core"
+      displayName: "Install .NET EF"
 
+    # https://docs.microsoft.com/en-us/azure/devops/pipelines/tasks/tool/nuget
     - task: NuGetToolInstaller@1
       displayName: "Install NuGet"
 
+    # https://docs.microsoft.com/en-us/azure/devops/pipelines/tasks/package/nuget
     - task: NuGetCommand@2
       displayName: "Restore NuGet package dependencies"
       inputs:
         restoreSolution: "$(solution)"
 
+        
+  - job: Build
+    steps:
+    # https://docs.microsoft.com/en-us/azure/devops/pipelines/tasks/build/dotnet-core-cli
     - task: DotNetCoreCLI@2
       displayName: "Build .NET: $(buildConfiguration)"
       inputs:
@@ -82,6 +89,7 @@ stages:
         --idempotent
       # --runtime version: "$(dotnetRuntimeVersion)"
       displayName: "Generate SQL migration script"
+
       # https://docs.microsoft.com/en-us/azure/devops/pipelines/tasks/utility/command-line
       # workingDirectory: "$(Agent.BuildDirectory)/s/Test-PipelineArmTemplates.Web/bin/Release/netcoreapp3.1"
       # workingDirectory: "$(Build.SourcesDirectory)/Test-PipelineArmTemplates.Web"
@@ -93,7 +101,9 @@ stages:
     - bash: "ls -la $(Build.ArtifactStagingDirectory)"          # /home/vsts/work/1/a
     - bash: "ls -la $(Build.SourcesDirectory)"                  # /home/vsts/work/1/s
 
-
+    
+  - job: Test
+    steps:
     - task: DotNetCoreCLI@2
       displayName: "dotnet test $(buildConfiguration)"
       inputs:
@@ -101,6 +111,10 @@ stages:
         projects: "**/*Tests/*.csproj"
         arguments: "--configuration $(buildConfiguration)"
 
+
+        
+  - job: Publish
+    steps:
     # Provides zip file for web app service
     - task: DotNetCoreCLI@2
       displayName: "Stage build output"
@@ -112,10 +126,18 @@ stages:
 
     # Provides dacpac file for database
     - task: CopyFiles@2
-      displayName: "Copy files to: $(Build.ArtifactStagingDirectory)"
+      displayName: "Copy dacpac files to: $(Build.ArtifactStagingDirectory)"
       inputs:
         sourceFolder: "$(Build.SourcesDirectory)"
         contents: "**\\bin\\$(buildConfiguration)\\**"
+        targetFolder: "$(Build.ArtifactStagingDirectory)"
+        
+    # Provides pipeline file
+    - task: CopyFiles@2
+      displayName: "Copy pipeline files to: $(Build.ArtifactStagingDirectory)"
+      inputs:
+        sourceFolder: "$(Build.SourcesDirectory)"
+        contents: "**\\ArmTemplates\\**\\azuredeploy*.json"
         targetFolder: "$(Build.ArtifactStagingDirectory)"
 
     - task: PublishBuildArtifacts@1
@@ -130,32 +152,32 @@ stages:
     - bash: "ls -la $(Build.SourcesDirectory)"                  # /home/vsts/work/1/s
 
 
-- stage: Provision
-  displayName: 'Terraforming on Azure'
-  dependsOn: Build
-  pool:
-    vmImage: "ubuntu-latest"
-  jobs:
-  - job: Provision
-    displayName: 'Provision Container Instance'
-    variables:
-    - group: TerraformEnvVars
-    steps:
-    # - bash: "pwd" # /home/vsts/work/1/s
-    # - bash: "ls"
-    # - bash: "terraform -version" # Terraform v1.0.8
-    - script: |
-        set -e
 
-        terraform init -input=false
-        terraform apply -input=false -auto-approve
-      name: 'RunTerraform'
-      displayName: 'Run Terraform'
-      # https://docs.microsoft.com/en-us/azure/devops/pipelines/tasks/utility/command-line?view=azure-devops#arguments
-      workingDirectory: $(projectName)/terraform/
-      env:
-        ARM_CLIENT_ID: $(ARM_CLIENT_ID)
-        ARM_CLIENT_SECRET: $(ARM_CLIENT_SECRET)
-        ARM_TENANT_ID: $(ARM_TENANT_ID)
-        ARM_SUBSCRIPTION_ID: $(ARM_SUBSCRIPTION_ID)
-        TF_VAR_imagebuild: $(tag)
+#- stage: Provision
+#  displayName: 'Terraforming on Azure'
+#  dependsOn: Build
+#  pool:
+#    vmImage: "ubuntu-latest"
+#  jobs:
+#  - job: Provision
+#    displayName: 'Provision Container Instance'
+#    variables:
+#    - group: TerraformEnvVars
+#    steps:
+#    # - bash: "pwd" # /home/vsts/work/1/s
+#    # - bash: "ls"
+#    # - bash: "terraform -version" # Terraform v1.0.8
+#    - script: |
+#        set -e
+#        terraform init -input=false
+#        terraform apply -input=false -auto-approve
+#      name: 'RunTerraform'
+#      displayName: 'Run Terraform'
+#      # https://docs.microsoft.com/en-us/azure/devops/pipelines/tasks/utility/command-line?view=azure-devops#arguments
+#      workingDirectory: $(projectName)/terraform/
+#      env:
+#        ARM_CLIENT_ID: $(ARM_CLIENT_ID)
+#        ARM_CLIENT_SECRET: $(ARM_CLIENT_SECRET)
+#        ARM_TENANT_ID: $(ARM_TENANT_ID)
+#        ARM_SUBSCRIPTION_ID: $(ARM_SUBSCRIPTION_ID)
+#        TF_VAR_imagebuild: $(tag)
