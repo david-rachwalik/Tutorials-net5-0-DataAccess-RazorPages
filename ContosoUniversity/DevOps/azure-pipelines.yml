@@ -20,8 +20,7 @@ stages:
     solution: "**/*.sln"
     buildPlatform: "AnyCPU"
     buildConfiguration: "Release"
-    artifactApplicationName: "app.zip"
-    artifactMigrationName: "migrations.sql"
+    scriptName: "migrations.sql"
   jobs:
   # ------------------------ Environment Setup Steps ------------------------
   # Each job receives its own machine; installed tools must persist across all jobs/steps
@@ -68,18 +67,19 @@ stages:
 
         
     # ------------------------ Artifact Staging Steps ------------------------
-    # Provides zip file for web app service
+    # Provides zip file for deployment to app service
+    # Can't output to specific filename but still few steps than ArchiveFiles@2 + CopyFiles@2
     - task: DotNetCoreCLI@2
       displayName: "Stage build output"
       inputs:
         command: publish
         publishWebProjects: True
         # https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-publish#options
-        # arguments: "--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)"
         arguments: >-
           --framework $(dotnetFramework)
           --configuration $(buildConfiguration)
-          --output $(Build.ArtifactStagingDirectory)/$(artifactApplicationName)
+          --output $(Build.ArtifactStagingDirectory)
+          --nologo
         zipAfterPublish: True
 
     # https://docs.microsoft.com/en-us/ef/core/miscellaneous/cli/dotnet
@@ -89,7 +89,7 @@ stages:
         --framework $(dotnetFramework)
         --configuration $(buildConfiguration)
         --startup-project $(projectName)/$(projectName).csproj
-        --output $(Build.ArtifactStagingDirectory)/$(artifactMigrationName)
+        --output $(Build.ArtifactStagingDirectory)/$(scriptName)
         --idempotent
       displayName: "Stage SQL migration script"
 
