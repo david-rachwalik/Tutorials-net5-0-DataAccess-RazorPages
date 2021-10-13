@@ -176,7 +176,8 @@
       // https://docs.microsoft.com/en-us/azure/templates/microsoft.web/sites/config-connectionstrings
       "type": "Microsoft.Web/sites/config",
       "apiVersion": "2021-02-01",
-      "name": "connectionstrings",
+      //"name": "connectionstrings",
+      "name": "[concat(variables('appName'), '/config')]",
       "dependsOn": [
         "[resourceId('Microsoft.Sql/servers', variables('sqlServerName'))]",
         "[resourceId('Microsoft.Web/sites', variables('appName'))]"
