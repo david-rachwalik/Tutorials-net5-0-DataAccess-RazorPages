@@ -20,7 +20,8 @@ stages:
     solution: "**/*.sln"
     buildPlatform: "AnyCPU"
     buildConfiguration: "Release"
-    scriptName: "migrations.sql"
+    artifactApplicationName: "app.zip"
+    artifactMigrationName: "migrations.sql"
   jobs:
   # ------------------------ Environment Setup Steps ------------------------
   # Each job receives its own machine; installed tools must persist across all jobs/steps
@@ -78,7 +79,7 @@ stages:
         arguments: >-
           --framework $(dotnetFramework)
           --configuration $(buildConfiguration)
-          --output $(Build.ArtifactStagingDirectory)
+          --output $(Build.ArtifactStagingDirectory)/$(artifactApplicationName)
         zipAfterPublish: True
 
     # https://docs.microsoft.com/en-us/ef/core/miscellaneous/cli/dotnet
@@ -88,7 +89,7 @@ stages:
         --framework $(dotnetFramework)
         --configuration $(buildConfiguration)
         --startup-project $(projectName)/$(projectName).csproj
-        --output $(Build.ArtifactStagingDirectory)/$(scriptName)
+        --output $(Build.ArtifactStagingDirectory)/$(artifactMigrationName)
         --idempotent
       displayName: "Stage SQL migration script"
 
