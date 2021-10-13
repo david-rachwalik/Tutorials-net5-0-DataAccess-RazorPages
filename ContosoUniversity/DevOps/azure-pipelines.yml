@@ -100,6 +100,7 @@ stages:
       displayName: "Stage SQL migration script"
       
     # Provides ARM (Azure Resource Manager) files
+    # https://docs.microsoft.com/en-us/azure/devops/pipelines/tasks/utility/copy-files
     - task: CopyFiles@2
       displayName: "Stage ARM files"
       inputs:
