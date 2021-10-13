@@ -7,6 +7,7 @@ trigger:
 
 variables:
   tag: '$(Build.BuildId)'
+  dotnetFramework: "net5.0"
   dotnetRuntimeVersion: "5.0.x"
   projectName: "ContosoUniversity"
   dbContext: "SchoolContext"
@@ -65,26 +66,34 @@ stages:
         arguments: "--configuration $(buildConfiguration)"
 
         
-    # ------------------------ Publish Steps ------------------------
+    # ------------------------ Artifact Staging Steps ------------------------
     # Provides zip file for web app service
     - task: DotNetCoreCLI@2
       displayName: "Stage build output"
       inputs:
         command: publish
         publishWebProjects: True
-        arguments: "--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)"
+        # https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-publish#options
+        # arguments: "--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)"
+        arguments: >-
+          --framework $(dotnetFramework)
+          --configuration $(buildConfiguration)
+          --output $(Build.ArtifactStagingDirectory)
         zipAfterPublish: True
 
     # https://docs.microsoft.com/en-us/ef/core/miscellaneous/cli/dotnet
     # https://docs.microsoft.com/en-us/ef/core/cli/dotnet#common-options
     - script: >-
         dotnet ef migrations script
+        --framework $(dotnetFramework)
         --configuration $(buildConfiguration)
         --startup-project $(projectName)/$(projectName).csproj
         --output $(Build.ArtifactStagingDirectory)/$(scriptName)
         --idempotent
-      displayName: "Generate SQL migration script"
+      displayName: "Stage SQL migration script"
 
+      
+    # ------------------------ Artifact Publish Steps ------------------------
     - task: PublishBuildArtifacts@1
       displayName: "Publish build artifact: drop"
       inputs:
