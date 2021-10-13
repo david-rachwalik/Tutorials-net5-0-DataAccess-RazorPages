@@ -33,7 +33,6 @@ stages:
       displayName: "Install .NET SDK"
       inputs:
         version: "$(dotnetRuntimeVersion)"
-        packageType: runtime
     
     # Omit '--version' here and let SDK determine EF package
     - script: dotnet tool install --global dotnet-ef
